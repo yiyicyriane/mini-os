@@ -126,14 +126,20 @@ class FileSystem:
         parent, name = self.resolve_parent_and_name(path)
         if name in parent.children:
             raise AlreadyExistsError(f"'{name}' already exists")
-        parent.add_child(Node(name=name, is_file=True, parent=parent))
+        try:
+            parent.add_child(Node(name=name, is_file=True, parent=parent))
+        except ValueError as error:
+            raise InvalidOperationError(str(error)) from error
 
     def make_directory(self, path: str) -> None:
         """Create a directory at the given path."""
         parent, name = self.resolve_parent_and_name(path)
         if name in parent.children:
             raise AlreadyExistsError(f"'{name}' already exists")
-        parent.add_child(Node(name=name, is_file=False, parent=parent))
+        try:
+            parent.add_child(Node(name=name, is_file=False, parent=parent))
+        except ValueError as error:
+            raise InvalidOperationError(str(error)) from error
 
     def change_directory(self, path: str) -> None:
         """Change current working directory."""
@@ -225,7 +231,10 @@ class FileSystem:
         if not node.is_file and node.children:
             raise InvalidOperationError("directory is not empty")
 
-        parent.remove_child(name)
+        try:
+            parent.remove_child(name)
+        except ValueError as error:
+            raise InvalidOperationError(str(error)) from error
 
     def _is_descendant(self, ancestor: Node, node: Node) -> bool:
         """Return True when node is in ancestor's subtree."""

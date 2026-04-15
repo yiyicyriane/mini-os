@@ -69,30 +69,35 @@ class Shell:
             elif command == "exit":
                 self._cmd_exit(args)
             else:
-                raise ValueError(f"Unknown command: {command}")
+                print(f"Error: unknown command '{command}'")
+                return
         except FileSystemError as error:
             print(f"Error: {error}")
         except ValueError as error:
             print(f"Error: invalid usage - {error}")
-        except Exception as error:
-            print(f"Error: unexpected failure: {error}")
+        except Exception:
+            print("Error: unexpected internal error")
 
     def _cmd_help(self, args: list[str]) -> None:
         if args:
             raise ValueError("Usage: help")
+        help_rows = [
+            ("help", "Show this help message"),
+            ("pwd", "Show current path"),
+            ("list [path]", "List directory contents"),
+            ("create <file>", "Create an empty file"),
+            ("mkdir <dir>", "Create a directory"),
+            ("cd <path>", "Change directory"),
+            ("read <file>", "Display file content"),
+            ("write <file> <content>", "Write content to a file"),
+            ("rename <old> <new>", "Rename file or directory"),
+            ("move <src> <dest>", "Move file/directory"),
+            ("delete <path>", "Delete file or empty directory"),
+            ("exit", "Exit MiniOS"),
+        ]
         print("Commands:")
-        print("  help                              Show this help message")
-        print("  pwd                               Show current path")
-        print("  list [path]                       List directory contents")
-        print("  create <path>                     Create an empty file")
-        print("  mkdir <path>                      Create a directory")
-        print("  cd <path>                         Change current directory")
-        print("  read <path>                       Read file content")
-        print("  write <path> <content>            Write content to file")
-        print("  rename <path> <new_name>          Rename file or directory")
-        print("  move <source> <destination>       Move/rename an entry")
-        print("  delete <path>                     Delete file/empty directory")
-        print("  exit                              Exit MiniOS")
+        for usage, description in help_rows:
+            print(f"  {usage:<30}{description}")
 
     def _cmd_pwd(self, args: list[str]) -> None:
         if args:
@@ -106,24 +111,26 @@ class Shell:
         node = self.fs.resolve_path(path) if path else self.fs.current
         items = self.fs.list_directory(path)
         if not items:
-            print("(empty)")
+            print("Directory is empty")
             return
 
         for item in items:
-            marker = "[F]" if node.children[item].is_file else "[D]"
+            marker = "[FILE]" if node.children[item].is_file else "[DIR]"
             print(f"{marker} {item}")
 
     def _cmd_create(self, args: list[str]) -> None:
         if len(args) != 1:
             raise ValueError("Usage: create <path>")
-        self.fs.create_file(args[0])
-        print("OK")
+        path = args[0]
+        self.fs.create_file(path)
+        print(f"File '{self._entry_name(path)}' created successfully")
 
     def _cmd_mkdir(self, args: list[str]) -> None:
         if len(args) != 1:
             raise ValueError("Usage: mkdir <path>")
-        self.fs.make_directory(args[0])
-        print("OK")
+        path = args[0]
+        self.fs.make_directory(path)
+        print(f"Directory '{self._entry_name(path)}' created successfully")
 
     def _cmd_cd(self, args: list[str]) -> None:
         if len(args) != 1:
@@ -141,28 +148,35 @@ class Shell:
         path = args[0]
         content = " ".join(args[1:])
         self.fs.write_file(path, content)
-        print("OK")
+        print(f"Content written to '{self._entry_name(path)}'")
 
     def _cmd_rename(self, args: list[str]) -> None:
         if len(args) != 2:
             raise ValueError("Usage: rename <path> <new_name>")
         self.fs.rename(args[0], args[1])
-        print("OK")
+        print("Renamed successfully")
 
     def _cmd_move(self, args: list[str]) -> None:
         if len(args) != 2:
             raise ValueError("Usage: move <source_path> <destination_path>")
         self.fs.move(args[0], args[1])
-        print("OK")
+        print("Moved successfully")
 
     def _cmd_delete(self, args: list[str]) -> None:
         if len(args) != 1:
             raise ValueError("Usage: delete <path>")
         self.fs.delete(args[0])
-        print("OK")
+        print("Deleted successfully")
 
     def _cmd_exit(self, args: list[str]) -> None:
         if args:
             raise ValueError("Usage: exit")
         self._running = False
         print("Goodbye!")
+
+    def _entry_name(self, path: str) -> str:
+        """Extract display name from a path string."""
+        normalized = path.rstrip("/")
+        if not normalized:
+            return path
+        return normalized.split("/")[-1]
