@@ -15,6 +15,20 @@ class Shell:
         """Initialize shell state."""
         self.fs = FileSystem()
         self._running = True
+        self.commands = {
+            "help": self._cmd_help,
+            "pwd": self._cmd_pwd,
+            "list": self._cmd_list,
+            "create": self._cmd_create,
+            "mkdir": self._cmd_mkdir,
+            "cd": self._cmd_cd,
+            "read": self._cmd_read,
+            "write": self._cmd_write,
+            "rename": self._cmd_rename,
+            "move": self._cmd_move,
+            "delete": self._cmd_delete,
+            "exit": self._cmd_exit,
+        }
 
     def run(self) -> None:
         """Start the interactive shell loop."""
@@ -44,33 +58,11 @@ class Shell:
             command = parts[0]
             args = parts[1:]
 
-            if command == "help":
-                self._cmd_help(args)
-            elif command == "pwd":
-                self._cmd_pwd(args)
-            elif command == "list":
-                self._cmd_list(args)
-            elif command == "create":
-                self._cmd_create(args)
-            elif command == "mkdir":
-                self._cmd_mkdir(args)
-            elif command == "cd":
-                self._cmd_cd(args)
-            elif command == "read":
-                self._cmd_read(args)
-            elif command == "write":
-                self._cmd_write(args)
-            elif command == "rename":
-                self._cmd_rename(args)
-            elif command == "move":
-                self._cmd_move(args)
-            elif command == "delete":
-                self._cmd_delete(args)
-            elif command == "exit":
-                self._cmd_exit(args)
-            else:
+            handler = self.commands.get(command)
+            if handler is None:
                 print(f"Error: unknown command '{command}'")
                 return
+            handler(args)
         except FileSystemError as error:
             print(f"Error: {error}")
         except ValueError as error:
