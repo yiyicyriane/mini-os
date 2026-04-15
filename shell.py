@@ -18,12 +18,19 @@ class Shell:
 
     def run(self) -> None:
         """Start the interactive shell loop."""
-        print("Welcome to MiniOS!")
-        print("Type 'help' to see available commands.")
+        print("=== Welcome to MiniOS ===")
+        print("Type 'help' for commands, 'exit' to quit.")
 
         while self._running:
-            prompt = f"{self.fs.get_current_path()} > "
-            raw_input_line = input(prompt)
+            prompt = f"MiniOS:{self.fs.get_current_path()}$ "
+            try:
+                raw_input_line = input(prompt)
+            except EOFError:
+                print("\nGoodbye!")
+                break
+            except KeyboardInterrupt:
+                print("\nError: interrupted")
+                continue
             self.handle_command(raw_input_line)
 
     def handle_command(self, raw_input_line: str) -> None:
@@ -66,26 +73,26 @@ class Shell:
         except FileSystemError as error:
             print(f"Error: {error}")
         except ValueError as error:
-            print(f"Error: {error}")
+            print(f"Error: invalid usage - {error}")
         except Exception as error:
             print(f"Error: unexpected failure: {error}")
 
     def _cmd_help(self, args: list[str]) -> None:
         if args:
             raise ValueError("Usage: help")
-        print("Supported commands:")
-        print("  help")
-        print("  pwd")
-        print("  list [path]")
-        print("  create <path>")
-        print("  mkdir <path>")
-        print("  cd <path>")
-        print("  read <path>")
-        print("  write <path> <content>")
-        print("  rename <path> <new_name>")
-        print("  move <source_path> <destination_path>")
-        print("  delete <path>")
-        print("  exit")
+        print("Commands:")
+        print("  help                              Show this help message")
+        print("  pwd                               Show current path")
+        print("  list [path]                       List directory contents")
+        print("  create <path>                     Create an empty file")
+        print("  mkdir <path>                      Create a directory")
+        print("  cd <path>                         Change current directory")
+        print("  read <path>                       Read file content")
+        print("  write <path> <content>            Write content to file")
+        print("  rename <path> <new_name>          Rename file or directory")
+        print("  move <source> <destination>       Move/rename an entry")
+        print("  delete <path>                     Delete file/empty directory")
+        print("  exit                              Exit MiniOS")
 
     def _cmd_pwd(self, args: list[str]) -> None:
         if args:
@@ -96,9 +103,15 @@ class Shell:
         if len(args) > 1:
             raise ValueError("Usage: list [path]")
         path = args[0] if args else ""
+        node = self.fs.resolve_path(path) if path else self.fs.current
         items = self.fs.list_directory(path)
+        if not items:
+            print("(empty)")
+            return
+
         for item in items:
-            print(item)
+            marker = "[F]" if node.children[item].is_file else "[D]"
+            print(f"{marker} {item}")
 
     def _cmd_create(self, args: list[str]) -> None:
         if len(args) != 1:

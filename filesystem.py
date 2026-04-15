@@ -125,14 +125,14 @@ class FileSystem:
         """Create an empty file at the given path."""
         parent, name = self.resolve_parent_and_name(path)
         if name in parent.children:
-            raise AlreadyExistsError(f"'{name}' already exists.")
+            raise AlreadyExistsError(f"'{name}' already exists")
         parent.add_child(Node(name=name, is_file=True, parent=parent))
 
     def make_directory(self, path: str) -> None:
         """Create a directory at the given path."""
         parent, name = self.resolve_parent_and_name(path)
         if name in parent.children:
-            raise AlreadyExistsError(f"'{name}' already exists.")
+            raise AlreadyExistsError(f"'{name}' already exists")
         parent.add_child(Node(name=name, is_file=False, parent=parent))
 
     def change_directory(self, path: str) -> None:
@@ -170,7 +170,7 @@ class FileSystem:
         if old_name not in parent.children:
             raise PathNotFoundError(f"Path not found: {path}")
         if new_name in parent.children:
-            raise AlreadyExistsError(f"'{new_name}' already exists.")
+            raise AlreadyExistsError(f"'{new_name}' already exists")
 
         node = parent.children.pop(old_name)
         node.name = new_name
@@ -200,7 +200,7 @@ class FileSystem:
         if target_parent.is_file:
             raise NotADirectoryError(f"'{target_parent.name}' is not a directory.")
         if target_name in target_parent.children:
-            raise AlreadyExistsError(f"'{target_name}' already exists.")
+            raise AlreadyExistsError(f"'{target_name}' already exists")
         if source_node is target_parent:
             raise InvalidOperationError("Cannot move a directory into itself.")
         if not source_node.is_file and self._is_descendant(
@@ -223,7 +223,7 @@ class FileSystem:
 
         node = parent.children[name]
         if not node.is_file and node.children:
-            raise InvalidOperationError("Directory is not empty.")
+            raise InvalidOperationError("directory is not empty")
 
         parent.remove_child(name)
 
